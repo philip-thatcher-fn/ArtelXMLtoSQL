@@ -1,3 +1,4 @@
+# This script processes Artel Data Manager XML files and pushes relevant data to a MySQL Database
 import xmltodict
 
 # Opening file to read with binary encoding and parsing to dict
