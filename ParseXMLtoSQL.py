@@ -27,7 +27,6 @@ else:
     # Full Plate Format
     print('Parsing in Full Plate mode...')
     mode = 'plate'
-    # rows = doc['Data']['Plate']['Well_Volumes']['Rows']
     groupsDict = doc['Data']['Plate']
     groupsLst.append(groupsDict)
 
