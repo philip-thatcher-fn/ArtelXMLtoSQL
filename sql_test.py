@@ -1,5 +1,11 @@
 import mysql.connector
 
+# db = mysql.connector.connect(host='localhost',
+#                              user='python_user',
+#                              passwd='*f39SEXJlUG1'
+#                              )
+
+
 db = mysql.connector.connect(host='localhost',
                              user='python_user',
                              passwd='*f39SEXJlUG1',
@@ -15,11 +21,13 @@ cursor = db.cursor()
 
 # cursor.execute('CREATE TABLE customers (name VARCHAR(255), address VARCHAR(255))')
 # cursor.execute('SHOW TABLES')
-
+#
 # for x in cursor:
-    # print(x)
-
+#     print(x)
+#
 # cursor.execute('ALTER TABLE customers ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY')
+#
+# db.commit()
 
 # sql = 'INSERT INTO customers (name, address) VALUES (%s, %s)'
 # val = ('Mary', 'Chicago')
