@@ -11,44 +11,52 @@ def parseXML(path):
 
 # doc = parseXML('3uL 1_10.xml')
 doc = parseXML('3_10uL_CHi.xml')
+data = doc['Data']
 
 # Store header info
-header = doc['Data']['Header3']
+header = data['Header3']
 print('Header:')
 print(header)
 
 # Determine file type
 # Create 'groups' (a list) with each group dict as a separate element
-groups = []
-try:
-    # Full Plate Format Test
-    groupsTmp = doc['Data']['Plate']
-except KeyError:
-    # Partial Plate (Group) Format
-    print('Parsing in Partial Plate (Group) mode...')
-    mode = 'group'
-    for x in doc['Data']['Group']:
-        groups.append(x)
-else:
+# Try to use case statements or conditionals. Test if plate is present and then if group is present
+groups = None
+if 'Plate' in data:
     # Full Plate Format
     print('Parsing in Full Plate mode...')
     mode = 'plate'
-    groupsTmp = doc['Data']['Plate']
-    groups.append(groupsTmp)
+    # groupsTmp = data['Plate']
+    # groups.append(groupsTmp)
+    groups = [data['Plate']]
+elif 'Group' in data:
+    # Partial Plate (Group) Format
+    print('Parsing in Partial Plate (Group) mode...')
+    mode = 'group'
+    # breakpoint()
+    groups = data['Group']
+else:
+    print('File Format Error')
 
 # Examine groupsLst
-groupsLen = len(groups)
-print('groups Length: ' + str(groupsLen))
+print(f'groups Length: {len(groups)}')
 print('Groups:')
-print(groups)
+print([x['Name'] for x in groups])
+# print([x['Name'] for x in groups if x['Name'] == 'Mom'])
+
+# breakpoint()
 
 if mode == 'plate':
-    target = doc['Data']['Run_Statistics']['Target_Volume']
+    target = data['Run_Statistics']['Target_Volume']
 
 # Loop through groupsLst to pull out relevant info
-for i in range(groupsLen):
+# for i in range(groupsLen):
+dataOut = {}
+for group in groups:
     # Write group dict from the group list
-    group = groups[i]
+    # group = groups[i]
+
+    groupName = group['Name']
 
     # get statistics if mode = group
     if mode == 'group':
@@ -56,21 +64,40 @@ for i in range(groupsLen):
 
     # Get volume data
     rows = group['Well_Volumes']['Rows']
-    rowsLen = len(rows)
-    columnsLen = len(rows[1]['Column'])
-    print('Rows: ' + str(rowsLen))
-    print('Column: ' + str(columnsLen))
+    # rowsLen = len(rows)
+    # columnsLen = len(rows[1]['Column'])
+    # print('Rows: ' + str(rowsLen))
+    # print('Column: ' + str(columnsLen))
 
-    values = []  # A1, A2, A3 ... B1 ...
+    valuesOut = None  # [[Rows (Alpha)], [Cols (Numeric)], [Values]]
+    rowsOut = []
+    colsOut = []
+    volOut = []
     # Looping through rows
-    for x in range(rowsLen):
+    # breakpoint()
+    colNames = [x['Name'] for x in group['Well_Volumes']['Columns']['Column']]
+    # row_names = [x['Row'] for x in rows]
+    # print(colNames)
+    for row in rows:
         # print(rows[x]['Column'])
         # Looping through 'Column' to get 'Value'
-        for y in range(columnsLen):
-            value = rows[x]['Column'][y]['Value']
-            values.append(value)
+        # for col in row['Column']:
+        #     values.append(col['Value'])
+        # values.append([x['Value'] for x in row['Column']])
+        # breakpoint()
+        rowName = row['Row']
+        # print(row_name)
+        # breakpoint()
+        # print(rows.index(row))
+        # col_name = col_names[rows.index(row['Column']['Value'])]
+        for (well, colName) in zip(row['Column'], colNames):
+            # print(rowName, colName, well['Value'])
+            rowsOut.append(rowName)
+            colsOut.append(colName)
+            volOut.append(well['Value'])
+    valuesOut = [rowsOut, colsOut, volOut]
+    # breakpoint()
+    print(valuesOut)
+    dataOut[groupName] = valuesOut
 
-    print('Target Volume:')
-    print(target)
-    print('Values:')
-    print(values)
+print(dataOut)
