@@ -9,7 +9,7 @@ import mysql.connector
 db = mysql.connector.connect(host='localhost',
                              user='python_user',
                              passwd='*f39SEXJlUG1',
-                             database='test_data'
+                             database='artel_data'
                              )
 
 # print(db)
@@ -65,5 +65,5 @@ db = mysql.connector.connect(host='localhost',
 # for x in result:
 #   print(x)
 
-cursor = db.cursor()
+# cursor = db.cursor()
 cursor.execute('CREATE TABLE test_well_data (id INT AUTO_INCREMENT PRIMARY KEY, Group1_Row VARCHAR(255), Group1_Col VARCHAR(255), Group1_Vol VARCHAR(255))')
