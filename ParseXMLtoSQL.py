@@ -142,6 +142,6 @@ def dataToDB(data, dbName):
 pathC96 = '3uL 1_10.xml'
 pathCHi = '3_10uL_CHi.xml'
 
-data = xmlToData(pathCHi)
+data = xmlToData(pathC96)
 
 dataToDB(data, 'artel_data')
