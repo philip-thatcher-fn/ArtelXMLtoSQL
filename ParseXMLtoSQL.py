@@ -11,32 +11,18 @@ def xmlToDict(path):
         doc = xmltodict.parse(f.read())
     return doc
 
+
 # Reformats FileID to get time in format: YYMMDDSSHHMISS
 def getTime(data):
     header = data['Header3']
     time = f"{header['Date']} {header['Time']}"
     return parse(time)
 
-def getWellData(doc):
+
+def getFileData(doc):
     data = doc['Data']
 
     outputData = {}
-
-    # Create Unique ID and save to output dict
-    sn = data['Plate_Reader']['Serial_Number']
-    breakpoint()
-    dateTime = getTime(data)
-    # uid = dateTime + '_' + sn + '_welldata'
-    # outputData['UniqueID'] = uid
-
-    # Create Col Names and save to output dict
-    outputData['ColNames'] = ['row', 'column', 'actual_vol']
-
-
-    # Store header info
-    # header = data['Header3']
-    # print('Header:')
-    # print(header)
 
     # Determine file type based on presence of 'Plate' key
     # Create 'groups' (a list) with each group dict as a separate element
@@ -54,25 +40,41 @@ def getWellData(doc):
     else:
         print('File Format Error!')
 
-    # Examine groupsLst
-    # print(f'groups Length: {len(groups)}')
-    # print('Groups:')
-    # # print([x['Name'] for x in groups if x['Name'] == 'Mom'])
+    # Pull group independent data
+    outputData['snReader'] = data['Plate_Reader']['Serial_Number']
+    outputData['dateTime'] = getTime(data)
+    outputData['type'] = mode
+    outputData['device'] = data['Header3']['Device_ID']
+    outputData['idLayout'] = data['Header3']['Layout_ID']
+    outputData['idFile'] = data['FileID']
+    outputData['snReader'] = data['Plate_Reader']['Serial_Number']
 
+    if 'Operator' in data['Header3']:
+        outputData['operator'] = data['Header3']['Operator']
+    else:
+        outputData['operator'] = ''
+
+    if 'Setup_Notes' in data['Header3']:
+        outputData['setupNotes'] = data['Header3']['Setup_Notes']
+    else:
+        outputData['setupNotes'] = ''
+
+    # Get Target Volume if mode = 'plate'
     if mode == 'plate':
         target = data['Run_Statistics']['Target_Volume']
 
-    # Loop through groups to pull out relevant info
-    groupNames = []
+    # Loop through groups to pull out info
+    wellGroup = []
+    wellRow = []
+    wellCol = []
+    wellVol_ul = []
+    wellVolTgt_ul = []
+    wellData = {}
     for group in groups:
-        groupData = []
 
         # remove spaces from group name
         groupNameTmp = group['Name'].replace(' ', '')
         groupName = groupNameTmp.lower()
-
-        # Push group name to lst
-        groupNames.append(groupName)
 
         # get target volume if mode = 'group'
         if mode == 'group':
@@ -83,29 +85,30 @@ def getWellData(doc):
         colNames = [x['Name'] for x in group['Well_Volumes']['Columns']['Column']]
 
         for row in rows:
-            rowName = row['Row']
             for (well, colName) in zip(row['Column'], colNames):
-                groupData.append([rowName, colName, well['Value']])
+                wellCol.append(colName)
+                wellRow.append(row['Row'])
+                wellGroup.append(groupName)
+                wellVol_ul.append(well['Value'])
+                wellVolTgt_ul.append(target)
 
-        # print(groupData)
+    wellData['wellGroup'] = wellGroup
+    wellData['wellRow'] = wellRow
+    wellData['wellCol'] = wellCol
+    wellData['wellVol_ul'] = wellVol_ul
+    wellData['wellVolTgt_ul'] = wellVolTgt_ul
 
-        outputData[groupName] = groupData
-    outputData['Groups'] = groupNames
+    outputData['wellData'] = wellData
+
+    print(outputData)
     return outputData
-
-
-def getRunData(doc):
-    data = doc['Data']
-
-    outputData = {}
 
 
 def xmlToData(path):
     # Parsed XML file dict
     data = xmlToDict(path)
     # Extract well data
-    wellData = getWellData(data)
-    print(wellData)
+    wellData = getFileData(data)
     return wellData
 
 
@@ -118,42 +121,27 @@ def dataToDB(data, dbName):
                                  )
     cursor = db.cursor()
 
-    for i in range(len(data['Groups'])):
-        # Create Table and Populate Table Commands
-        tableName = data['UniqueID'] + '_' + data['Groups'][i]
+    # Populate 'run_data' Table
+    cmd = "INSERT INTO run_data (date_time, type, device, id_file, sn_reader, id_layout, operator, setup_notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+    val = (data['dateTime'], data['type'], data['device'], data['idFile'], data['snReader'], data['idLayout'], data['operator'], data['setupNotes'])
+    cursor.execute(cmd, val)
+    fkey = int(cursor.lastrowid)
+    print(str(cursor.rowcount) + " row(s) inserted into run_data.")
 
-        cmdCreateTable = 'CREATE TABLE ' + tableName + ' (id INT AUTO_INCREMENT PRIMARY KEY, '
-        cmdPopulateTable = 'INSERT INTO ' + tableName + ' ('
-        for x in data['ColNames']:
-            if x != data['ColNames'][-1]:
-                cmdCreateTable += x + ' VARCHAR(255), '
-                cmdPopulateTable += x + ', '
-            else:
-                cmdCreateTable += x + ' VARCHAR(255))'
-                cmdPopulateTable += x + ') VALUES ('
+    # Populate 'well_data' Table
+    cmd = "INSERT INTO well_data (id_run, `group`, `row`, col, vol_ul, vol_tgt_ul) VALUES (%s, %s, %s, %s, %s, %s)"
 
-                # Complete cmdPopulateTable
-                for y in data['ColNames']:
-                    if y != data['ColNames'][-1]:
-                        cmdPopulateTable += '%s, '
-                    else:
-                        cmdPopulateTable += '%s)'
+    val = []
+    for i in range(len(data['wellData']['wellGroup'])):
+        val.append([fkey, data['wellData']['wellGroup'][i], data['wellData']['wellRow'][i], data['wellData']['wellCol'][i], data['wellData']['wellVol_ul'][i], data['wellData']['wellVolTgt_ul'][i]])
+    cursor.executemany(cmd, val)
+    print(str(cursor.rowcount) + " row(s) inserted into well_data.")
 
-        #Create Table
-        cursor.execute(cmdCreateTable)
-        print('Table ' + tableName + ' was created.')
-
-        # Populate Table
-        currValueKey = data['Groups'][i]
-        values = data[currValueKey]
-        cursor.executemany(cmdPopulateTable, values)
-        db.commit()
-        print(str(cursor.rowcount) + " row(s) were inserted.")
-
+    db.commit()
 
 pathC96 = '3uL 1_10.xml'
 pathCHi = '3_10uL_CHi.xml'
 
 data = xmlToData(pathCHi)
 
-# dataToDB(data, 'artel_data_test')
+dataToDB(data, 'artel_data')
