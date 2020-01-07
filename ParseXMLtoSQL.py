@@ -103,7 +103,7 @@ def getFileData(doc):
 
     outputData['wellData'] = wellData
 
-    print(outputData)
+    # print(outputData)
     return outputData
 
 
@@ -152,6 +152,7 @@ def moveFile(currFilePath):
     newFolderName = 'Processed'
     newFilePath = currFolderPath + '/' + newFolderName + '/' + fileName
     shutil.move(currFilePath, newFilePath)
+    print('File moved to: ' + newFilePath)
 
 
 # Get file path of single XML file in working directory
@@ -182,4 +183,6 @@ def processFile(filePath):
     data = xmlToData(filePath)
     dataToDB(data, 'artel_data')
     moveFile(filePath)
+    print('Processing completed successfully!')
+
 
