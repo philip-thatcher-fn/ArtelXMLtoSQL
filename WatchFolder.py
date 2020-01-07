@@ -24,6 +24,7 @@ class MyHandler(PatternMatchingEventHandler):
         while True:
             try:
                 f = open(event.src_path, 'rb')
+                f.close()
                 print('File is available')
                 break
             except PermissionError:
