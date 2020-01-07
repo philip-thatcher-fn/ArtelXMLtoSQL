@@ -19,6 +19,17 @@ class MyHandler(PatternMatchingEventHandler):
         """
         # the file will be processed there
         print(event.src_path, event.event_type)
+
+        # Check for PermissionError
+        while True:
+            try:
+                f = open(event.src_path, 'rb')
+                print('File is available')
+                break
+            except PermissionError:
+                print('File is not available')
+                time.sleep(1)
+
         processFile(event.src_path)
 
     # def on_modified(self, event):
