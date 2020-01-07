@@ -2,7 +2,10 @@
 import xmltodict
 import mysql.connector
 from dateutil.parser import parse
+import platform
+import os
 import time
+import shutil
 
 
 # Opening file to read with binary encoding and parsing to dict
@@ -123,7 +126,8 @@ def dataToDB(data, dbName):
 
     # Populate 'run_data' Table
     cmd = "INSERT INTO run_data (date_time, type, device, id_file, sn_reader, id_layout, operator, setup_notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-    val = (data['dateTime'], data['type'], data['device'], data['idFile'], data['snReader'], data['idLayout'], data['operator'], data['setupNotes'])
+    val = (data['dateTime'], data['type'], data['device'], data['idFile'], data['snReader'], data['idLayout'],
+           data['operator'], data['setupNotes'])
     cursor.execute(cmd, val)
     fkey = int(cursor.lastrowid)
     print(str(cursor.rowcount) + " row(s) inserted into run_data.")
@@ -133,15 +137,49 @@ def dataToDB(data, dbName):
 
     val = []
     for i in range(len(data['wellData']['wellGroup'])):
-        val.append([fkey, data['wellData']['wellGroup'][i], data['wellData']['wellRow'][i], data['wellData']['wellCol'][i], data['wellData']['wellVol_ul'][i], data['wellData']['wellVolTgt_ul'][i]])
+        val.append(
+            [fkey, data['wellData']['wellGroup'][i], data['wellData']['wellRow'][i], data['wellData']['wellCol'][i],
+             data['wellData']['wellVol_ul'][i], data['wellData']['wellVolTgt_ul'][i]])
     cursor.executemany(cmd, val)
     print(str(cursor.rowcount) + " row(s) inserted into well_data.")
 
     db.commit()
 
-pathC96 = '3uL 1_10.xml'
-pathCHi = '3_10uL_CHi.xml'
 
-data = xmlToData(pathC96)
+def moveFile(currFilePath):
+    fileName = os.path.basename(currFilePath)
+    currFolderPath = os.path.dirname(currFilePath)
+    newFolderName = 'Processed'
+    newFilePath = currFolderPath + '/' + newFolderName + '/' + fileName
+    shutil.move(currFilePath, newFilePath)
 
-dataToDB(data, 'artel_data')
+
+# Get file path of single XML file in working directory
+# def getFilePath():
+#     folderName = 'Artel_Process'
+#     system = platform.system()
+#     # Windows
+#     if system == 'Windows':
+#         print('Windows Detected')
+#         folderPath = 'C:\\' + folderName
+#     # MacOS
+#     elif system == 'Darwin':
+#         print('OSX Detected')
+#         folderPath = '/Users/philip.thatcher/Desktop/' + folderName
+#     else:
+#         print('Unknown OS')
+#     files = os.listdir(folderPath)
+#     print(files)
+#     fileName = 'test'
+#     filePath = folderPath + str(fileName)
+#     return filePath
+
+
+# pathC96 = '3uL 1_10.xml'
+# pathCHi = '3_10uL_CHi.xml'
+
+def processFile(filePath):
+    data = xmlToData(filePath)
+    dataToDB(data, 'artel_data')
+    moveFile(filePath)
+
