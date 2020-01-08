@@ -12,6 +12,20 @@ db = mysql.connector.connect(host='localhost',
                              database='artel_data'
                              )
 
+cursor = db.cursor()
+# cursor.execute("SELECT DISTINCT id_file FROM run_data WHERE id_file = '112519115500'")
+cursor.execute("SELECT DISTINCT id_file FROM run_data")
+
+# for x in cursor:
+#     print(x)
+
+rows = cursor.fetchall()
+result = []
+for row in rows:
+    result.append(row[0])
+print(result)
+print('Results: ' + str(len(result)))
+
 # print(db)
 
 # cursor.execute('CREATE DATABASE test_data')
@@ -65,5 +79,4 @@ db = mysql.connector.connect(host='localhost',
 # for x in result:
 #   print(x)
 
-# cursor = db.cursor()
-cursor.execute('CREATE TABLE test_well_data (id INT AUTO_INCREMENT PRIMARY KEY, Group1_Row VARCHAR(255), Group1_Col VARCHAR(255), Group1_Vol VARCHAR(255))')
+# cursor.execute('CREATE TABLE test_well_data (id INT AUTO_INCREMENT PRIMARY KEY, Group1_Row VARCHAR(255), Group1_Col VARCHAR(255), Group1_Vol VARCHAR(255))')

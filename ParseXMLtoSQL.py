@@ -115,15 +115,31 @@ def xmlToData(path):
     return wellData
 
 
-# Input dictionary must have the following keys:
-def dataToDB(data, dbName):
-    db = mysql.connector.connect(host='localhost',
-                                 user='python_user',
-                                 passwd='*f39SEXJlUG1',
-                                 database=dbName
-                                 )
+def connectDB(dbHost, dbUser, dbPasswd, dbName):
+    db = mysql.connector.connect(host=dbHost,
+                                     user=dbUser,
+                                     passwd=dbPasswd,
+                                     database=dbName
+                                     )
     cursor = db.cursor()
+    return db, cursor
 
+
+# Checks the database for FileID to be processed and returns True if unique
+def checkDupFileID(fileID, cursor):
+    unique = True
+    cmd = "SELECT DISTINCT id_file FROM run_data"
+    cursor.execute(cmd)
+    rows = cursor.fetchall()
+    for row in rows:
+        if fileID == row[0]:
+            unique = False
+            break
+    return unique
+
+
+# Input dictionary must have the following keys:
+def dataToDB(data, db, cursor):
     # Populate 'run_data' Table
     cmd = "INSERT INTO run_data (date_time, type, device, id_file, sn_reader, id_layout, operator, setup_notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
     val = (data['dateTime'], data['type'], data['device'], data['idFile'], data['snReader'], data['idLayout'],
@@ -146,34 +162,12 @@ def dataToDB(data, dbName):
     db.commit()
 
 
-def moveFile(currFilePath):
+def moveFile(currFilePath, destFolder):
     fileName = os.path.basename(currFilePath)
     currFolderPath = os.path.dirname(currFilePath)
-    newFolderName = 'Processed'
-    newFilePath = currFolderPath + '/' + newFolderName + '/' + fileName
+    newFilePath = currFolderPath + '/' + destFolder + '/' + fileName
     shutil.move(currFilePath, newFilePath)
     print('File moved to: ' + newFilePath)
-
-
-# Get file path of single XML file in working directory
-# def getFilePath():
-#     folderName = 'Artel_Process'
-#     system = platform.system()
-#     # Windows
-#     if system == 'Windows':
-#         print('Windows Detected')
-#         folderPath = 'C:\\' + folderName
-#     # MacOS
-#     elif system == 'Darwin':
-#         print('OSX Detected')
-#         folderPath = '/Users/philip.thatcher/Desktop/' + folderName
-#     else:
-#         print('Unknown OS')
-#     files = os.listdir(folderPath)
-#     print(files)
-#     fileName = 'test'
-#     filePath = folderPath + str(fileName)
-#     return filePath
 
 
 # pathC96 = '3uL 1_10.xml'
@@ -181,8 +175,12 @@ def moveFile(currFilePath):
 
 def processFile(filePath):
     data = xmlToData(filePath)
-    dataToDB(data, 'artel_data')
-    moveFile(filePath)
-    print('Processing completed successfully!')
-
-
+    db, cursor = connectDB('localhost', 'python_user', '*f39SEXJlUG1', 'artel_data')
+    unique = checkDupFileID(data['idFile'], cursor)
+    if unique:
+        dataToDB(data, db, cursor)
+        moveFile(filePath, 'Processed')
+        print('Processing completed successfully!')
+    else:
+        print('Duplicate FileID found in DB: ' + str(data['idFile']))
+        print('Data not pushed to DB!')
