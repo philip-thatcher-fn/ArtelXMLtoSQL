@@ -1,1 +1,0 @@
-python "C:\Users\Philip\PycharmProjects\ArtelXMLtoSQL\WatchFolder.py" C:\Users\Philip\Desktop\Artel_Data

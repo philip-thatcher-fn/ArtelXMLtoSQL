@@ -2,7 +2,8 @@ import sys
 import time
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
-from ParseXMLtoSQL import processFile
+from parser import processFile
+from logger import printWithTime
 
 
 class MyHandler(PatternMatchingEventHandler):
@@ -22,17 +23,17 @@ class MyHandler(PatternMatchingEventHandler):
         # To ensure the file is transferred fully before processing
         time.sleep(1)
 
-        print(event.src_path, event.event_type)
+        printWithTime(event.src_path + ' ' + event.event_type)
 
         # Check for PermissionError
         while True:
             try:
                 f = open(event.src_path, 'rb')
                 f.close()
-                print('File is available')
+                printWithTime('File is available')
                 break
             except PermissionError:
-                print('File is not available')
+                printWithTime('File is not available')
                 time.sleep(1)
 
         processFile(event.src_path, uniqueCheck)
@@ -57,8 +58,8 @@ if __name__ == '__main__':
     observer = Observer()
     observer.schedule(MyHandler(), path if args else '.')
     observer.start()
-    print('Watching: ' + path)
-    print('Unique FileID Check [1/0]: ' + str(uniqueCheck))
+    printWithTime('Watching: ' + path)
+    printWithTime('Unique FileID Check [1/0]: ' + str(uniqueCheck))
 
     try:
         while True:
