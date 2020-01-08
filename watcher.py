@@ -2,7 +2,7 @@ import sys
 import time
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
-import parser
+from parser import processFile
 from logger import printWithTime
 
 
@@ -36,7 +36,7 @@ class MyHandler(PatternMatchingEventHandler):
                 printWithTime('File is not available')
                 time.sleep(1)
 
-        parser.processFile(event.src_path, uniqueCheck)
+        processFile(event.src_path, uniqueCheck)
 
     # def on_modified(self, event):
     #     self.process(event)
