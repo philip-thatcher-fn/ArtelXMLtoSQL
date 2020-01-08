@@ -1,0 +1,1 @@
+python "C:\Users\Philip\PycharmProjects\ArtelXMLtoSQL\watcher.py" C:\Users\Philip\Desktop\Artel_Data 1
