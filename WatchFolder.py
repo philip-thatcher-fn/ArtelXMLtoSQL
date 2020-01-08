@@ -18,6 +18,10 @@ class MyHandler(PatternMatchingEventHandler):
             path/to/observed/file
         """
         # the file will be processed there
+
+        # To ensure the file is transferred fully before processing
+        time.sleep(1)
+
         print(event.src_path, event.event_type)
 
         # Check for PermissionError
@@ -31,7 +35,7 @@ class MyHandler(PatternMatchingEventHandler):
                 print('File is not available')
                 time.sleep(1)
 
-        processFile(event.src_path)
+        processFile(event.src_path, uniqueCheck)
 
     # def on_modified(self, event):
     #     self.process(event)
@@ -49,10 +53,12 @@ class MyHandler(PatternMatchingEventHandler):
 if __name__ == '__main__':
     args = sys.argv[1:]
     path = args[0]
+    uniqueCheck = int(args[1])
     observer = Observer()
     observer.schedule(MyHandler(), path if args else '.')
     observer.start()
     print('Watching: ' + path)
+    print('Unique FileID Check [1/0]: ' + str(uniqueCheck))
 
     try:
         while True:

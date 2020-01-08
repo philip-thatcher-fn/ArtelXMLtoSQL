@@ -117,10 +117,10 @@ def xmlToData(path):
 
 def connectDB(dbHost, dbUser, dbPasswd, dbName):
     db = mysql.connector.connect(host=dbHost,
-                                     user=dbUser,
-                                     passwd=dbPasswd,
-                                     database=dbName
-                                     )
+                                 user=dbUser,
+                                 passwd=dbPasswd,
+                                 database=dbName
+                                 )
     cursor = db.cursor()
     return db, cursor
 
@@ -173,14 +173,20 @@ def moveFile(currFilePath, destFolder):
 # pathC96 = '3uL 1_10.xml'
 # pathCHi = '3_10uL_CHi.xml'
 
-def processFile(filePath):
+def processFile(filePath, uniqueCheck):
     data = xmlToData(filePath)
     db, cursor = connectDB('localhost', 'python_user', '*f39SEXJlUG1', 'artel_data')
-    unique = checkDupFileID(data['idFile'], cursor)
+
+    if uniqueCheck == 1:
+        unique = checkDupFileID(data['idFile'], cursor)
+    else:
+        unique = True
+
     if unique:
         dataToDB(data, db, cursor)
         moveFile(filePath, 'Processed')
         print('Processing completed successfully!')
     else:
         print('Duplicate FileID found in DB: ' + str(data['idFile']))
-        print('Data not pushed to DB!')
+        moveFile(filePath, 'Not Processed')
+        print('Data not pushed to DB! Processing completed unsuccessfully!')
