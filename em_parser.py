@@ -1,0 +1,5 @@
+access_token = '0d0dabfd4a34ab4131ea955b1ad3bf64ae0b59a5f8629243012d113f6b0abcf9'
+client_id = 'key-em-api-prod'
+client_secret = 'secret-em-api-prod'
+token_type = 'Bearer'
+scope = 'read'
