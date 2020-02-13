@@ -6,8 +6,11 @@ from xml_parser import processFile
 from logger import printWithTime
 
 args = sys.argv[1:]
-path = args[0]
 uniqueCheck = int(args[1])
+path = args[0]
+if path[-1] != '/' or path[-1] != '\\':
+    path += '/'
+
 
 class MyHandler(PatternMatchingEventHandler):
     patterns = ["*.xml", "*.lxml"]

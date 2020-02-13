@@ -2,7 +2,10 @@ import sys
 from datetime import datetime
 
 args = sys.argv[1:]
+
 path = args[0]
+if path[-1] != '/' or path[-1] != '\\':
+    path += '/'
 
 
 def printWithTime(message):
