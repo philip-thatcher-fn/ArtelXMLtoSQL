@@ -1,1 +1,1 @@
-python "C:\Users\Artel\PycharmProjects\ArtelXMLtoSQL\watcher.py" C:\Artel_Export 1
+python "C:\Users\Artel\PycharmProjects\ArtelXMLtoSQL\watcher.py" C:\Artel_Export\ 1
