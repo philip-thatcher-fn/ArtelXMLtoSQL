@@ -4,7 +4,7 @@ from datetime import datetime
 args = sys.argv[1:]
 
 path = args[0]
-if path[-1] != '/' or path[-1] != '\\':
+if path[-1] != '/' and path[-1] != '\\':
     path += '/'
 
 
