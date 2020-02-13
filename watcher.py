@@ -5,6 +5,9 @@ from watchdog.events import PatternMatchingEventHandler
 from xml_parser import processFile
 from logger import printWithTime
 
+args = sys.argv[1:]
+path = args[0]
+uniqueCheck = int(args[1])
 
 class MyHandler(PatternMatchingEventHandler):
     patterns = ["*.xml", "*.lxml"]
@@ -52,9 +55,6 @@ class MyHandler(PatternMatchingEventHandler):
 
 
 if __name__ == '__main__':
-    args = sys.argv[1:]
-    path = args[0]
-    uniqueCheck = int(args[1])
     observer = Observer()
     observer.schedule(MyHandler(), path if args else '.')
     observer.start()
