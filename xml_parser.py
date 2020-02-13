@@ -33,12 +33,18 @@ def getFileData(doc):
         # Full Plate Format
         printWithTime('Parsing in Full Plate mode...')
         mode = 'plate'
+        # There is only one plate dict so we need to wrap it in a list
         groups = [data['Plate']]
     elif 'Group' in data:
         # Partial Plate (Group) Format
         printWithTime('Parsing in Partial Plate (Group) mode...')
         mode = 'group'
-        groups = data['Group']
+        if type(data['Group']) == list:
+            # There are multiple group dicts in a list
+            groups = data['Group']
+        else:
+            # There is only one group dict so we need to wrap it in a list
+            groups = [data['Group']]
     else:
         printWithTime('File Format Error!')
 
@@ -120,7 +126,9 @@ def connectDB(dbHost, dbUser, dbPasswd, dbName):
                                  passwd=dbPasswd,
                                  database=dbName
                                  )
+
     cursor = db.cursor()
+
     return db, cursor
 
 
@@ -168,9 +176,6 @@ def moveFile(currFilePath, destFolder):
     shutil.move(currFilePath, newFilePath)
     printWithTime('File moved to: ' + newFilePath)
 
-
-# pathC96 = '3uL 1_10.xml'
-# pathCHi = '3_10uL_CHi.xml'
 
 def processFile(filePath, uniqueCheck):
     data = xmlToData(filePath)
