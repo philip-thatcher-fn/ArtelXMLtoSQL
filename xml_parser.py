@@ -156,7 +156,9 @@ def dataToDB(data, db, cursor):
     log(str(cursor.rowcount) + " row(s) inserted into run_data.")
 
     # Populate 'well_data' Table
-    cmd = "INSERT INTO well_data (id_run, `group`, `row`, col, vol_ul, vol_tgt_ul) VALUES (%s, %s, %s, %s, %s, %s)"
+    # Old cmd
+    # cmd = "INSERT INTO well_data (id_run, `group`, `row`, col, vol_ul, vol_tgt_ul) VALUES (%s, %s, %s, %s, %s, %s)"
+    cmd = "INSERT INTO well_data (id_run, `group`, plate_row, plate_col, vol_ul, vol_tgt_ul) VALUES (%s, %s, %s, %s, %s, %s)"
 
     val = []
     for i in range(len(data['wellData']['wellGroup'])):
