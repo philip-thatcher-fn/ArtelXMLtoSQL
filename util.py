@@ -1,18 +1,19 @@
 import sys
 from datetime import datetime
+import platform
 
 
 # Gets the file path from the input argument
 def getPath():
-    os = sys.platform
+    os = platform.system()
     args = sys.argv[1:]
 
     # Add trailing slash to path if needed
     path = args[0]
-    if os == 'win32':
+    if os == 'Windows':
         if path[-1] != '\\':
             path += '\\'
-    elif os == 'darwin':
+    elif os == 'Darwin':
         if path[-1] != '/':
             path += '/'
 
