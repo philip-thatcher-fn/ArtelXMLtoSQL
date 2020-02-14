@@ -4,7 +4,7 @@ import mysql.connector
 from dateutil.parser import parse
 import os
 import shutil
-from util import log
+from logger import printWithTime
 import datetime
 import time
 
@@ -33,13 +33,13 @@ def getFileData(doc):
     groups = None
     if 'Plate' in data:
         # Full Plate Format
-        log('Parsing in Full Plate mode...')
+        printWithTime('Parsing in Full Plate mode...')
         mode = 'plate'
         # There is only one plate dict so we need to wrap it in a list
         groups = [data['Plate']]
     elif 'Group' in data:
         # Partial Plate (Group) Format
-        log('Parsing in Partial Plate (Group) mode...')
+        printWithTime('Parsing in Partial Plate (Group) mode...')
         mode = 'group'
         if type(data['Group']) == list:
             # There are multiple group dicts in a list
@@ -48,7 +48,7 @@ def getFileData(doc):
             # There is only one group dict so we need to wrap it in a list
             groups = [data['Group']]
     else:
-        log('File Format Error!')
+        printWithTime('File Format Error!')
 
     # Pull group independent data
     outputData['snReader'] = data['Plate_Reader']['Serial_Number']
@@ -110,7 +110,7 @@ def getFileData(doc):
 
     outputData['wellData'] = wellData
 
-    # log(outputData)
+    # printWithTime(outputData)
     return outputData
 
 
@@ -149,8 +149,15 @@ def checkDupFileID(fileID, cursor):
 
 # Input dictionary must have the following keys:
 def dataToDB(data, db, cursor):
+    # Populate 'run_data' Table
+    cmd = "INSERT INTO run_data (date_time, type, device, id_file, sn_reader, id_layout, operator, setup_notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+    val = (data['dateTime'], data['type'], data['device'], data['idFile'], data['snReader'], data['idLayout'],
+           data['operator'], data['setupNotes'])
+    cursor.execute(cmd, val)
+    fkey = int(cursor.lastrowid)
+    printWithTime(str(cursor.rowcount) + " row(s) inserted into run_data.")
 
-    # Build epoch time for inserting data from fileID
+    # Build epoch time for insterting data from fileID
     fileIDStr = data['idFile']
     monthStr = fileIDStr[0:2]
     dayStr = fileIDStr[2:4]
@@ -160,32 +167,30 @@ def dataToDB(data, db, cursor):
     secStr = fileIDStr[10:12]
     dt = datetime.datetime(int(yearStr), int(monthStr), int(dayStr), int(hourStr), int(minStr), int(secStr))
     timeID = int(time.mktime(dt.timetuple()))
-
     # Split data in hamilton and hardware
     hardware = data['device'].split("_")
     deviceTested = str(hardware[0])
     hardwareTested = str(hardware[1])
 
-    # Populate 'run_data' Table
-    cmd = "INSERT INTO run_data (date_time, type, device, id_file, sn_reader, id_layout, operator, setup_notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
-    val = (data['dateTime'], data['type'], data['device'], data['idFile'], data['snReader'], data['idLayout'],
-           data['operator'], data['setupNotes'])
-
-    cursor.execute(cmd, val)
-    fkey = int(cursor.lastrowid)
-    log(str(cursor.rowcount) + " row(s) inserted into run_data.")
-
     # Populate 'well_data' Table
-    cmd = "INSERT INTO well_data (id_run, `group`, plate_row, plate_col, vol_ul, vol_tgt_ul, epoch_time, date_time, device_id, hardware_type) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    # cmd = "INSERT INTO well_data (id_run, `group`, `row`, col, vol_ul, vol_tgt_ul) VALUES (%s, %s, %s, %s, %s, %s)"
+    cmd = "INSERT INTO well_data (id_run, `group`, `plate_row`, plate_col, vol_ul, vol_tgt_ul, epoch_time, date_time, device_id, hardware_type) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+
     val = []
+
     for i in range(len(data['wellData']['wellGroup'])):
         val.append(
             [fkey, data['wellData']['wellGroup'][i], data['wellData']['wellRow'][i], data['wellData']['wellCol'][i],
-             data['wellData']['wellVol_ul'][i], data['wellData']['wellVolTgt_ul'][i], timeID, data['dateTime'],
-             deviceTested, hardwareTested])
+             data['wellData']['wellVol_ul'][i], data['wellData']['wellVolTgt_ul'][i], timeID, data['dateTime'], deviceTested, hardwareTested])
 
+    '''
+    for i in range(len(data['wellData']['wellGroup'])):
+        val.append(
+            [fkey, data['wellData']['wellGroup'][i], data['wellData']['wellRow'][i], data['wellData']['wellCol'][i],
+             data['wellData']['wellVol_ul'][i], data['wellData']['wellVolTgt_ul'][i]])
+    '''
     cursor.executemany(cmd, val)
-    log(str(cursor.rowcount) + " row(s) inserted into well_data.")
+    printWithTime(str(cursor.rowcount) + " row(s) inserted into well_data.")
 
     db.commit()
 
@@ -195,7 +200,7 @@ def moveFile(currFilePath, destFolder):
     currFolderPath = os.path.dirname(currFilePath)
     newFilePath = currFolderPath + '/' + destFolder + '/' + fileName
     shutil.move(currFilePath, newFilePath)
-    log('File moved to: ' + newFilePath)
+    printWithTime('File moved to: ' + newFilePath)
 
 
 def processFile(filePath, uniqueCheck):
@@ -210,8 +215,8 @@ def processFile(filePath, uniqueCheck):
     if unique:
         dataToDB(data, db, cursor)
         moveFile(filePath, 'Processed')
-        log('Processing completed successfully!')
+        printWithTime('Processing completed successfully!')
     else:
-        log('Duplicate FileID found in DB: ' + str(data['idFile']))
+        printWithTime('Duplicate FileID found in DB: ' + str(data['idFile']))
         moveFile(filePath, 'Not Processed')
-        log('Data not pushed to DB! Processing completed unsuccessfully!')
+        printWithTime('Data not pushed to DB! Processing completed unsuccessfully!')
