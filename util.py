@@ -9,7 +9,7 @@ def getPath():
 
     # Add trailing slash to path if needed
     path = args[0]
-    if os == 'Windows':
+    if os == 'win32':
         if path[-1] != '\\':
             path += '\\'
     elif os == 'darwin':

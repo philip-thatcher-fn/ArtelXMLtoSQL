@@ -14,4 +14,4 @@ limit = 5
 url = 'https://api.elementalmachines.io:443/api/machines/' + udid + '/samples.json?access_token=' + access_token + '&order=asc&limit=' + str(limit)
 
 response = requests.get(url)
-pprint.pprint(response.json())
+print(response.json())
