@@ -4,7 +4,7 @@ import mysql.connector
 from dateutil.parser import parse
 import os
 import shutil
-from logger import printWithTime
+from util import log
 
 
 # Opening file to read with binary encoding and parsing to dict
@@ -31,13 +31,13 @@ def getFileData(doc):
     groups = None
     if 'Plate' in data:
         # Full Plate Format
-        printWithTime('Parsing in Full Plate mode...')
+        log('Parsing in Full Plate mode...')
         mode = 'plate'
         # There is only one plate dict so we need to wrap it in a list
         groups = [data['Plate']]
     elif 'Group' in data:
         # Partial Plate (Group) Format
-        printWithTime('Parsing in Partial Plate (Group) mode...')
+        log('Parsing in Partial Plate (Group) mode...')
         mode = 'group'
         if type(data['Group']) == list:
             # There are multiple group dicts in a list
@@ -46,7 +46,7 @@ def getFileData(doc):
             # There is only one group dict so we need to wrap it in a list
             groups = [data['Group']]
     else:
-        printWithTime('File Format Error!')
+        log('File Format Error!')
 
     # Pull group independent data
     outputData['snReader'] = data['Plate_Reader']['Serial_Number']
@@ -108,7 +108,7 @@ def getFileData(doc):
 
     outputData['wellData'] = wellData
 
-    # printWithTime(outputData)
+    # log(outputData)
     return outputData
 
 
@@ -153,7 +153,7 @@ def dataToDB(data, db, cursor):
            data['operator'], data['setupNotes'])
     cursor.execute(cmd, val)
     fkey = int(cursor.lastrowid)
-    printWithTime(str(cursor.rowcount) + " row(s) inserted into run_data.")
+    log(str(cursor.rowcount) + " row(s) inserted into run_data.")
 
     # Populate 'well_data' Table
     cmd = "INSERT INTO well_data (id_run, `group`, `row`, col, vol_ul, vol_tgt_ul) VALUES (%s, %s, %s, %s, %s, %s)"
@@ -164,7 +164,7 @@ def dataToDB(data, db, cursor):
             [fkey, data['wellData']['wellGroup'][i], data['wellData']['wellRow'][i], data['wellData']['wellCol'][i],
              data['wellData']['wellVol_ul'][i], data['wellData']['wellVolTgt_ul'][i]])
     cursor.executemany(cmd, val)
-    printWithTime(str(cursor.rowcount) + " row(s) inserted into well_data.")
+    log(str(cursor.rowcount) + " row(s) inserted into well_data.")
 
     db.commit()
 
@@ -174,7 +174,7 @@ def moveFile(currFilePath, destFolder):
     currFolderPath = os.path.dirname(currFilePath)
     newFilePath = currFolderPath + '/' + destFolder + '/' + fileName
     shutil.move(currFilePath, newFilePath)
-    printWithTime('File moved to: ' + newFilePath)
+    log('File moved to: ' + newFilePath)
 
 
 def processFile(filePath, uniqueCheck):
@@ -189,8 +189,8 @@ def processFile(filePath, uniqueCheck):
     if unique:
         dataToDB(data, db, cursor)
         moveFile(filePath, 'Processed')
-        printWithTime('Processing completed successfully!')
+        log('Processing completed successfully!')
     else:
-        printWithTime('Duplicate FileID found in DB: ' + str(data['idFile']))
+        log('Duplicate FileID found in DB: ' + str(data['idFile']))
         moveFile(filePath, 'Not Processed')
-        printWithTime('Data not pushed to DB! Processing completed unsuccessfully!')
+        log('Data not pushed to DB! Processing completed unsuccessfully!')

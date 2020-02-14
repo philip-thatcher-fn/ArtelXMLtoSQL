@@ -1,15 +1,18 @@
 import sys
 import time
-from watchdog.observers import Observer
+
 from watchdog.events import PatternMatchingEventHandler
+from watchdog.observers import Observer
+
 from xml_parser import processFile
-from logger import printWithTime
+
+from util import log
+from util import getPath
 
 args = sys.argv[1:]
 uniqueCheck = int(args[1])
-path = args[0]
-if path[-1] != '/' and path[-1] != '\\':
-    path += '\\'
+
+path = getPath()
 
 
 class MyHandler(PatternMatchingEventHandler):
@@ -29,17 +32,17 @@ class MyHandler(PatternMatchingEventHandler):
         # To ensure the file is transferred fully before processing
         time.sleep(1)
 
-        printWithTime(event.src_path + ' ' + event.event_type)
+        log(event.src_path + ' ' + event.event_type)
 
         # Check for PermissionError
         while True:
             try:
                 f = open(event.src_path, 'rb')
                 f.close()
-                printWithTime('File is available')
+                log('File is available')
                 break
             except PermissionError:
-                printWithTime('File is not available')
+                log('File is not available')
                 time.sleep(1)
 
         processFile(event.src_path, uniqueCheck)
@@ -61,8 +64,8 @@ if __name__ == '__main__':
     observer = Observer()
     observer.schedule(MyHandler(), path if args else '.')
     observer.start()
-    printWithTime('Watching: ' + path)
-    printWithTime('Unique FileID Check [1/0]: ' + str(uniqueCheck))
+    log('Watching: ' + path)
+    log('Unique FileID Check [1/0]: ' + str(uniqueCheck))
 
     try:
         while True:
