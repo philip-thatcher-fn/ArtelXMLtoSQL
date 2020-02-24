@@ -2,9 +2,8 @@
 import xmltodict
 import mysql.connector
 from dateutil.parser import parse
-import os
-import shutil
 from util import log
+from util import moveFile
 import datetime
 import time
 
@@ -198,14 +197,6 @@ def dataToDB(data, db, cursor):
     log(str(cursor.rowcount) + " row(s) inserted into well_data.")
 
     db.commit()
-
-
-def moveFile(currFilePath, destFolder):
-    fileName = os.path.basename(currFilePath)
-    currFolderPath = os.path.dirname(currFilePath)
-    newFilePath = currFolderPath + '/' + destFolder + '/' + fileName
-    shutil.move(currFilePath, newFilePath)
-    log('File moved to: ' + newFilePath)
 
 
 def processFile(filePath, uniqueCheck):
