@@ -59,6 +59,18 @@ def getFileData(doc):
     outputData['idFile'] = data['FileID']
     outputData['snReader'] = data['Plate_Reader']['Serial_Number']
 
+    # Get Lot Numbers and format as comma-separated str
+    lotNumbers = ''
+    for i in range(len(data['Materials']['Item'])):
+        lot = data['Materials']['Item'][i]['LSN']
+        if i == 0:
+            lotNumbers += lot
+        else:
+            lotNumbers += ', ' + lot
+
+    outputData['lsn'] = lotNumbers
+
+    # Get data that could be left blank
     if 'Operator' in data['Header3']:
         outputData['operator'] = data['Header3']['Operator']
     else:
@@ -110,7 +122,6 @@ def getFileData(doc):
 
     outputData['wellData'] = wellData
 
-    # log(outputData)
     return outputData
 
 
@@ -149,7 +160,6 @@ def checkDupFileID(fileID, cursor):
 
 # Input dictionary must have the following keys:
 def dataToDB(data, db, cursor):
-
     # Build epoch time for inserting data from fileID
     fileIDStr = data['idFile']
     monthStr = fileIDStr[0:2]
@@ -167,9 +177,9 @@ def dataToDB(data, db, cursor):
     hardwareTested = str(hardware[1])
 
     # Populate 'run_data' Table
-    cmd = "INSERT INTO run_data (date_time, type, device, id_file, sn_reader, id_layout, operator, setup_notes) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+    cmd = "INSERT INTO run_data (date_time, type, device, id_file, sn_reader, id_layout, operator, setup_notes, lot_numbers) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
     val = (data['dateTime'], data['type'], data['device'], data['idFile'], data['snReader'], data['idLayout'],
-           data['operator'], data['setupNotes'])
+           data['operator'], data['setupNotes'], data['lsn'])
 
     cursor.execute(cmd, val)
     fkey = int(cursor.lastrowid)
